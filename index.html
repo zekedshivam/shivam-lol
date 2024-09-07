@@ -1,21 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HHP7NJSXKY"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-HHP7NJSXKY');
-</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shivam.lol - Cosmic Tic-Tac-Toe</title>
+    <title>Shivam.lol</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Orbitron:wght@600&display=swap');
-        
+
         body, html {
             margin: 0;
             padding: 0;
@@ -26,19 +17,26 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
+            position: relative;
         }
+
         .container {
             text-align: center;
             max-width: 100%;
             padding: 20px;
             box-sizing: border-box;
+            position: relative;
+            z-index: 1;
         }
+
         h1 {
             font-size: 2em;
             color: #8f8fff;
             margin-bottom: 20px;
             font-weight: 700;
         }
+
         .welcome-text {
             font-family: 'Orbitron', sans-serif;
             font-weight: 600;
@@ -48,25 +46,30 @@
             color: #a0a0ff;
             text-shadow: 0 0 10px rgba(160, 160, 255, 0.5);
         }
+
         .intro-text {
             font-size: 1em;
             margin-bottom: 20px;
             line-height: 1.6;
-            font-weight: 700; /* Changed to bold */
+            font-weight: 700;
         }
+
         p {
             font-size: 1em;
             margin-bottom: 20px;
             line-height: 1.6;
             font-weight: 300;
         }
+
         #gameBoard {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             margin: 0 auto 20px;
             max-width: 300px;
+            position: relative;
         }
+
         .cell {
             aspect-ratio: 1 / 1;
             background-color: rgba(143, 143, 255, 0.1);
@@ -79,15 +82,18 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         .cell:hover {
             background-color: rgba(143, 143, 255, 0.2);
         }
+
         #status {
             font-size: 1em;
             margin-bottom: 20px;
             font-weight: 400;
-            min-height: 1.2em; /* Ensure consistent height */
+            min-height: 1.2em;
         }
+
         #resetButton {
             font-size: 1em;
             padding: 10px 20px;
@@ -97,36 +103,70 @@
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: none; /* Initially hidden */
+            display: none;
         }
+
         #resetButton:hover {
             background-color: #7f7fff;
         }
-        .star {
-            position: absolute;
-            background-color: #fff;
-            border-radius: 50%;
-            opacity: 0.8;
+
+        .symbol-selection {
+            margin-bottom: 20px;
+        }
+
+        .symbol-selection label {
+            margin: 0 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .symbol-selection input[type="radio"] {
+            display: none;
+        }
+
+        .symbol-selection input[type="radio"]:checked + span {
+            color: #8f8fff;
+            font-weight: bold;
+        }
+
+        .symbol-selection p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
 
         @media (max-width: 480px) {
             h1 {
                 font-size: 1.5em;
             }
+
             .welcome-text {
                 font-size: 1em;
             }
+
             .intro-text {
                 font-size: 0.9em;
+            }
+
             p {
                 font-size: 0.9em;
             }
+
             #gameBoard {
                 max-width: 240px;
             }
+
             .cell {
                 font-size: 1.5em;
             }
+        }
+
+        .star {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0.8;
+            z-index: 0;
         }
     </style>
 </head>
@@ -135,6 +175,11 @@
         <h1>Cosmic Tic-Tac-Toe</h1>
         <p class="welcome-text">Welcome to shivam.lol</p>
         <p class="intro-text">While the main site is hunting for ideas (LOL😆), enjoy a game of Tic-Tac-Toe set against the backdrop of the cosmos 🚀 🌌</p>
+        <div class="symbol-selection">
+            <p>Select your symbol ⬇️</p>
+            <label><input type="radio" name="symbol" value="✦" checked><span>✦</span></label>
+            <label><input type="radio" name="symbol" value="◯"><span>◯</span></label>
+        </div>
         <div id="gameBoard"></div>
         <div id="status"></div>
         <button id="resetButton">New Game</button>
@@ -144,8 +189,11 @@
         const gameBoard = document.getElementById('gameBoard');
         const statusDisplay = document.getElementById('status');
         const resetButton = document.getElementById('resetButton');
+        const symbolSelection = document.querySelector('.symbol-selection');
         let gameActive = true;
-        let currentPlayer = "✦";
+        let currentPlayer = "";
+        let userPlayer = "";
+        let computerPlayer = "";
         let gameState = ["", "", "", "", "", "", "", "", ""];
         let gameStarted = false;
 
@@ -161,30 +209,39 @@
         ];
 
         function createBoard() {
+            gameBoard.innerHTML = "";  // Clear the board before creating it
             for (let i = 0; i < 9; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
+                cell.dataset.index = i;
                 cell.addEventListener('click', () => handleCellClick(cell, i));
                 gameBoard.appendChild(cell);
             }
         }
 
         function handleCellClick(cell, index) {
-            if (gameState[index] !== "" || !gameActive) return;
+            if (gameState[index] !== "" || !gameActive || currentPlayer !== userPlayer) return;
 
-            gameState[index] = currentPlayer;
-            cell.textContent = currentPlayer;
-            
+            gameState[index] = userPlayer;
+            cell.textContent = userPlayer;
+
             if (!gameStarted) {
                 gameStarted = true;
                 resetButton.style.display = 'inline-block';
+                symbolSelection.style.display = 'none'; // Hide the symbol selection after the game starts
             }
 
             handleResultValidation();
+            if (gameActive) {
+                currentPlayer = computerPlayer; // Switch to computer's turn
+                statusDisplay.textContent = `${currentPlayer}'s turn`;
+                setTimeout(() => computerMove(), 1000); // 1 second delay for computer move
+            }
         }
 
         function handleResultValidation() {
             let roundWon = false;
+
             for (let i = 0; i < winningConditions.length; i++) {
                 const [a, b, c] = winningConditions[i];
                 if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
@@ -205,27 +262,81 @@
                 gameActive = false;
                 return;
             }
+        }
 
-            currentPlayer = currentPlayer === "✦" ? "◯" : "✦";
-            statusDisplay.textContent = `${currentPlayer}'s turn`;
+        function computerMove() {
+            if (!gameActive) return;
+
+            let availableCells = gameState
+                .map((value, index) => value === "" ? index : null)
+                .filter(value => value !== null);
+
+            if (availableCells.length === 0) return;
+
+            let bestMove;
+
+            // 50% chance to make a strategic move
+            if (Math.random() < 0.5) {
+                bestMove = findStrategicMove();
+            }
+
+            // If no strategic move was found or we're making a random move, choose randomly
+            if (bestMove === undefined) {
+                bestMove = availableCells[Math.floor(Math.random() * availableCells.length)];
+            }
+
+            gameState[bestMove] = computerPlayer;
+            document.querySelector(`.cell[data-index="${bestMove}"]`).textContent = computerPlayer;
+
+            handleResultValidation();
+            if (gameActive) {
+                currentPlayer = userPlayer; // Switch back to user's turn
+                statusDisplay.textContent = `${currentPlayer}'s turn`;
+            }
+        }
+
+        function findStrategicMove() {
+            // Check for winning move
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (gameState[a] === computerPlayer && gameState[b] === computerPlayer && gameState[c] === "") return c;
+                if (gameState[a] === computerPlayer && gameState[c] === computerPlayer && gameState[b] === "") return b;
+                if (gameState[b] === computerPlayer && gameState[c] === computerPlayer && gameState[a] === "") return a;
+            }
+
+            // Check for blocking move
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (gameState[a] === userPlayer && gameState[b] === userPlayer && gameState[c] === "") return c;
+                if (gameState[a] === userPlayer && gameState[c] === userPlayer && gameState[b] === "") return b;
+                if (gameState[b] === userPlayer && gameState[c] === userPlayer && gameState[a] === "") return a;
+            }
+
+            // If no winning or blocking move, return undefined
+            return undefined;
         }
 
         function handleReset() {
-            gameActive = true;
-            currentPlayer = "✦";
+            userPlayer = document.querySelector('input[name="symbol"]:checked').value;
+            computerPlayer = userPlayer === "✦" ? "◯" : "✦";
+            currentPlayer = userPlayer;
             gameState = ["", "", "", "", "", "", "", "", ""];
             statusDisplay.textContent = `${currentPlayer}'s turn`;
             document.querySelectorAll('.cell').forEach(cell => cell.textContent = "");
+            gameActive = true;
             gameStarted = false;
             resetButton.style.display = 'none';
+            symbolSelection.style.display = 'block'; // Show the symbol selection again
         }
 
-        resetButton.addEventListener('click', handleReset);
+        function initializeGame() {
+            userPlayer = document.querySelector('input[name="symbol"]:checked').value;
+            computerPlayer = userPlayer === "✦" ? "◯" : "✦";
+            currentPlayer = userPlayer;
+            statusDisplay.textContent = `${currentPlayer}'s turn`;
+            createBoard();
+        }
 
-        createBoard();
-        statusDisplay.textContent = `${currentPlayer}'s turn`;
-
-        // Create starry background
         function createStars() {
             for (let i = 0; i < 100; i++) {
                 const star = document.createElement('div');
@@ -238,7 +349,15 @@
             }
         }
 
-        createStars();
+        resetButton.addEventListener('click', handleReset);
+
+        document.querySelectorAll('input[name="symbol"]').forEach(radio => {
+            radio.addEventListener('change', initializeGame);
+        });
+
+        initializeGame(); // Initialize the game when the page loads
+
+        createStars(); // Create the starry background
     </script>
 </body>
 </html>
